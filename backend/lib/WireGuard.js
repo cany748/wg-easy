@@ -22,7 +22,7 @@ const {
   WG_POST_DOWN,
 } = require("../config");
 const Util = require("./Util");
-const ServerError = require("./ServerError");
+const { createError } = require("h3");
 
 module.exports = class WireGuard {
   async getConfig() {
@@ -171,7 +171,10 @@ ${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ""}AllowedIP
     const config = await this.getConfig();
     const client = config.clients[clientId];
     if (!client) {
-      throw new ServerError(`Client Not Found: ${clientId}`, 404);
+      throw createError({
+        status: 404,
+        message: `Client Not Found: ${clientId}`,
+      });
     }
 
     return client;
@@ -294,7 +297,10 @@ Endpoint = ${WG_HOST}:${WG_PORT}`;
     const client = await this.getClient({ clientId });
 
     if (!Util.isValidIPv4(address)) {
-      throw new ServerError(`Invalid Address: ${address}`, 400);
+      throw createError({
+        status: 400,
+        message: `Invalid Address: ${address}`,
+      });
     }
 
     client.address = address;

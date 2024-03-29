@@ -8,7 +8,7 @@
     "node": "18"
   },
   "scripts": {
-    "serve": "DEBUG=Server,WireGuard nodemon server.js",
+    "serve": "DEBUG=Server,WireGuard WG_HOST=0.0.0.0 node server.js",
     "serve-with-password": "PASSWORD=wg npm run serve",
     "lint": "eslint ."
   },
