@@ -1,0 +1,23 @@
+{
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm -r dev",
+    "build": "pnpm -r build",
+    "preview": "pnpm -r preview",
+    "lint": "eslint . --fix",
+    "type-check": "vue-tsc --build --force"
+  },
+  "devDependencies": {
+    "@cany748/eslint-config": "^2.0.0",
+    "@types/node": "^20.11.15"
+  },
+  "eslintConfig": {
+    "extends": [
+      "@cany748"
+    ]
+  },
+  "prettier": {
+    "printWidth": 140
+  }
+}
