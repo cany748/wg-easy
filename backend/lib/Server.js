@@ -6,40 +6,33 @@ const { stat, readFile } = require("node:fs/promises");
 const { join } = require("node:path");
 const bcrypt = require("bcryptjs");
 
-const expressSession = require("express-session");
 const debug = require("debug")("Server");
 
 const {
   createApp,
   createError,
   createRouter,
+  getRequestURL,
+  getRequestHeader,
   defineEventHandler,
-  fromNodeMiddleware,
   getRouterParam,
   toNodeListener,
   readBody,
   setHeader,
   serveStatic,
+  useSession,
 } = require("h3");
 
 const WireGuard = require("../services/WireGuard");
 
 const { PORT, WEBUI_HOST, RELEASE, PASSWORD, LANG, UI_TRAFFIC_STATS, UI_CHART_TYPE } = require("../config");
 
+const sessionPassword = crypto.randomBytes(256).toString("hex");
+
 module.exports = class Server {
   constructor() {
     const app = createApp();
     this.app = app;
-
-    app.use(
-      fromNodeMiddleware(
-        expressSession({
-          secret: crypto.randomBytes(256).toString("hex"),
-          resave: true,
-          saveUninitialized: true,
-        }),
-      ),
-    );
 
     const router = createRouter();
     app.use(router);
@@ -80,9 +73,14 @@ module.exports = class Server {
       // Authentication
       .get(
         "/api/session",
-        defineEventHandler((event) => {
+        defineEventHandler(async (event) => {
           const requiresPassword = !!process.env.PASSWORD;
-          const authenticated = requiresPassword ? !!(event.node.req.session && event.node.req.session.authenticated) : true;
+          const session = await useSession(event, {
+            password: sessionPassword,
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+          });
+
+          const authenticated = requiresPassword ? !!session.data.authenticated : true;
 
           return {
             requiresPassword,
@@ -109,40 +107,41 @@ module.exports = class Server {
             });
           }
 
-          event.node.req.session.authenticated = true;
-          event.node.req.session.save();
+          const session = await useSession(event, {
+            password: sessionPassword,
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+          });
 
-          debug(`New Session: ${event.node.req.session.id}`);
+          await session.update({
+            authenticated: true,
+          });
+
+          debug(`New Session: ${session.id}`);
 
           return { succcess: true };
         }),
       );
 
     // WireGuard
-    app.use(
-      fromNodeMiddleware((req, res, next) => {
-        if (!PASSWORD || !req.url.startsWith("/api/")) {
-          return next();
-        }
+    app.use(async (event) => {
+      if (!PASSWORD || !getRequestURL(event).pathname.startsWith("/api/")) return;
 
-        if (req.session && req.session.authenticated) {
-          return next();
-        }
+      const session = await useSession(event, {
+        password: sessionPassword,
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+      });
 
-        if (req.url.startsWith("/api/") && req.headers.authorization) {
-          if (bcrypt.compareSync(req.headers.authorization, bcrypt.hashSync(PASSWORD, 10))) {
-            return next();
-          }
-          return res.status(401).json({
-            error: "Incorrect Password",
-          });
-        }
+      if (session.data.authenticated) return;
 
-        return res.status(401).json({
-          error: "Not Logged In",
-        });
-      }),
-    );
+      const authorization = getRequestHeader(event, "authorization");
+
+      if (authorization) {
+        if (bcrypt.compareSync(authorization, bcrypt.hashSync(PASSWORD, 10))) return;
+        throw createError({ statusCode: 401, message: "Incorrect Password" });
+      }
+
+      throw createError({ statusCode: 401, message: "Not Logged In" });
+    });
 
     const router2 = createRouter();
     app.use(router2);
@@ -150,12 +149,15 @@ module.exports = class Server {
     router2
       .delete(
         "/api/session",
-        defineEventHandler((event) => {
-          const sessionId = event.node.req.session.id;
+        defineEventHandler(async (event) => {
+          const session = await useSession(event, {
+            password: sessionPassword,
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+          });
 
-          event.node.req.session.destroy();
+          debug(`Deleted Session: ${session.id}`);
+          await session.clear();
 
-          debug(`Deleted Session: ${sessionId}`);
           return { success: true };
         }),
       )
