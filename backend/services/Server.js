@@ -1,5 +1,5 @@
-'use strict';
+"use strict";
 
-const Server = require('../lib/Server');
+const Server = require("../lib/Server");
 
 module.exports = new Server();

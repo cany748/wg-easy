@@ -1,14 +1,14 @@
-'use strict';
+"use strict";
 
-const fs = require('fs').promises;
-const path = require('path');
+const fs = require("fs").promises;
+const path = require("path");
 
-const debug = require('debug')('WireGuard');
-const uuid = require('uuid');
-const QRCode = require('qrcode');
+const debug = require("debug")("WireGuard");
+const uuid = require("uuid");
+const QRCode = require("qrcode");
 
-const Util = require('./Util');
-const ServerError = require('./ServerError');
+const Util = require("./Util");
+const ServerError = require("./ServerError");
 
 const {
   WG_PATH,
@@ -23,29 +23,28 @@ const {
   WG_POST_UP,
   WG_PRE_DOWN,
   WG_POST_DOWN,
-} = require('../config');
+} = require("../config");
 
 module.exports = class WireGuard {
-
   async getConfig() {
     if (!this.__configPromise) {
       this.__configPromise = Promise.resolve().then(async () => {
         if (!WG_HOST) {
-          throw new Error('WG_HOST Environment Variable Not Set!');
+          throw new Error("WG_HOST Environment Variable Not Set!");
         }
 
-        debug('Loading configuration...');
+        debug("Loading configuration...");
         let config;
         try {
-          config = await fs.readFile(path.join(WG_PATH, 'wg0.json'), 'utf8');
+          config = await fs.readFile(path.join(WG_PATH, "wg0.json"), "utf8");
           config = JSON.parse(config);
-          debug('Configuration loaded.');
+          debug("Configuration loaded.");
         } catch (err) {
-          const privateKey = await Util.exec('wg genkey');
+          const privateKey = await Util.exec("wg genkey");
           const publicKey = await Util.exec(`echo ${privateKey} | wg pubkey`, {
-            log: 'echo ***hidden*** | wg pubkey',
+            log: "echo ***hidden*** | wg pubkey",
           });
-          const address = WG_DEFAULT_ADDRESS.replace('x', '1');
+          const address = WG_DEFAULT_ADDRESS.replace("x", "1");
 
           config = {
             server: {
@@ -55,14 +54,16 @@ module.exports = class WireGuard {
             },
             clients: {},
           };
-          debug('Configuration generated.');
+          debug("Configuration generated.");
         }
 
         await this.__saveConfig(config);
-        await Util.exec('wg-quick down wg0').catch(() => { });
-        await Util.exec('wg-quick up wg0').catch((err) => {
+        await Util.exec("wg-quick down wg0").catch(() => {});
+        await Util.exec("wg-quick up wg0").catch((err) => {
           if (err && err.message && err.message.includes('Cannot find device "wg0"')) {
-            throw new Error('WireGuard exited with the error: Cannot find device "wg0"\nThis usually means that your host\'s kernel does not support WireGuard!');
+            throw new Error(
+              'WireGuard exited with the error: Cannot find device "wg0"\nThis usually means that your host\'s kernel does not support WireGuard!',
+            );
           }
 
           throw err;
@@ -110,24 +111,23 @@ PostDown = ${WG_POST_DOWN}
 # Client: ${client.name} (${clientId})
 [Peer]
 PublicKey = ${client.publicKey}
-${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ''
-}AllowedIPs = ${client.address}/32`;
+${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ""}AllowedIPs = ${client.address}/32`;
     }
 
-    debug('Config saving...');
-    await fs.writeFile(path.join(WG_PATH, 'wg0.json'), JSON.stringify(config, false, 2), {
+    debug("Config saving...");
+    await fs.writeFile(path.join(WG_PATH, "wg0.json"), JSON.stringify(config, false, 2), {
       mode: 0o660,
     });
-    await fs.writeFile(path.join(WG_PATH, 'wg0.conf'), result, {
+    await fs.writeFile(path.join(WG_PATH, "wg0.conf"), result, {
       mode: 0o600,
     });
-    debug('Config saved.');
+    debug("Config saved.");
   }
 
   async __syncConfig() {
-    debug('Config syncing...');
-    await Util.exec('wg syncconf wg0 <(wg-quick strip wg0)');
-    debug('Config synced.');
+    debug("Config syncing...");
+    await Util.exec("wg syncconf wg0 <(wg-quick strip wg0)");
+    debug("Config synced.");
   }
 
   async getClients() {
@@ -141,7 +141,7 @@ ${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ''
       createdAt: new Date(client.createdAt),
       updatedAt: new Date(client.updatedAt),
       allowedIPs: client.allowedIPs,
-      downloadableConfig: 'privateKey' in client,
+      downloadableConfig: "privateKey" in client,
       persistentKeepalive: null,
       latestHandshakeAt: null,
       transferRx: null,
@@ -149,12 +149,12 @@ ${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ''
     }));
 
     // Loop WireGuard status
-    const dump = await Util.exec('wg show wg0 dump', {
+    const dump = await Util.exec("wg show wg0 dump", {
       log: false,
     });
     dump
       .trim()
-      .split('\n')
+      .split("\n")
       .slice(1)
       .forEach((line) => {
         const [
@@ -166,14 +166,12 @@ ${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ''
           transferRx,
           transferTx,
           persistentKeepalive,
-        ] = line.split('\t');
+        ] = line.split("\t");
 
         const client = clients.find((client) => client.publicKey === publicKey);
         if (!client) return;
 
-        client.latestHandshakeAt = latestHandshakeAt === '0'
-          ? null
-          : new Date(Number(`${latestHandshakeAt}000`));
+        client.latestHandshakeAt = latestHandshakeAt === "0" ? null : new Date(Number(`${latestHandshakeAt}000`));
         client.transferRx = Number(transferRx);
         client.transferTx = Number(transferTx);
         client.persistentKeepalive = persistentKeepalive;
@@ -198,15 +196,14 @@ ${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ''
 
     return `
 [Interface]
-PrivateKey = ${client.privateKey ? `${client.privateKey}` : 'REPLACE_ME'}
+PrivateKey = ${client.privateKey ? `${client.privateKey}` : "REPLACE_ME"}
 Address = ${client.address}/24
-${WG_DEFAULT_DNS ? `DNS = ${WG_DEFAULT_DNS}\n` : ''}\
-${WG_MTU ? `MTU = ${WG_MTU}\n` : ''}\
+${WG_DEFAULT_DNS ? `DNS = ${WG_DEFAULT_DNS}\n` : ""}\
+${WG_MTU ? `MTU = ${WG_MTU}\n` : ""}\
 
 [Peer]
 PublicKey = ${config.server.publicKey}
-${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ''
-}AllowedIPs = ${WG_ALLOWED_IPS}
+${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ""}AllowedIPs = ${WG_ALLOWED_IPS}
 PersistentKeepalive = ${WG_PERSISTENT_KEEPALIVE}
 Endpoint = ${WG_HOST}:${WG_PORT}`;
   }
@@ -214,37 +211,37 @@ Endpoint = ${WG_HOST}:${WG_PORT}`;
   async getClientQRCodeSVG({ clientId }) {
     const config = await this.getClientConfiguration({ clientId });
     return QRCode.toString(config, {
-      type: 'svg',
+      type: "svg",
       width: 512,
     });
   }
 
   async createClient({ name }) {
     if (!name) {
-      throw new Error('Missing: Name');
+      throw new Error("Missing: Name");
     }
 
     const config = await this.getConfig();
 
-    const privateKey = await Util.exec('wg genkey');
+    const privateKey = await Util.exec("wg genkey");
     const publicKey = await Util.exec(`echo ${privateKey} | wg pubkey`);
-    const preSharedKey = await Util.exec('wg genpsk');
+    const preSharedKey = await Util.exec("wg genpsk");
 
     // Calculate next IP
     let address;
     for (let i = 2; i < 255; i++) {
       const client = Object.values(config.clients).find((client) => {
-        return client.address === WG_DEFAULT_ADDRESS.replace('x', i);
+        return client.address === WG_DEFAULT_ADDRESS.replace("x", i);
       });
 
       if (!client) {
-        address = WG_DEFAULT_ADDRESS.replace('x', i);
+        address = WG_DEFAULT_ADDRESS.replace("x", i);
         break;
       }
     }
 
     if (!address) {
-      throw new Error('Maximum number of clients reached.');
+      throw new Error("Maximum number of clients reached.");
     }
 
     // Create Client
@@ -321,7 +318,6 @@ Endpoint = ${WG_HOST}:${WG_PORT}`;
 
   // Shutdown wireguard
   async Shutdown() {
-    await Util.exec('wg-quick down wg0').catch(() => { });
+    await Util.exec("wg-quick down wg0").catch(() => {});
   }
-
 };
