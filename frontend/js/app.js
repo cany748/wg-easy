@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-/* eslint-disable no-alert */
 /* eslint-disable no-undef */
 /* eslint-disable no-new */
 
@@ -8,9 +6,9 @@
 function bytes(bytes, decimals, kib, maxunit) {
   kib = kib || false;
   if (bytes === 0) return "0 B";
-  if (Number.isNaN(parseFloat(bytes)) && !Number.isFinite(bytes)) return "NaN";
+  if (Number.isNaN(Number.parseFloat(bytes)) && !Number.isFinite(bytes)) return "NaN";
   const k = kib ? 1024 : 1000;
-  const dm = decimals != null && !Number.isNaN(decimals) && decimals >= 0 ? decimals : 2;
+  const dm = decimals != undefined && !Number.isNaN(decimals) && decimals >= 0 ? decimals : 2;
   const sizes = kib
     ? ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB", "BiB"]
     : ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB", "BB"];
@@ -19,8 +17,8 @@ function bytes(bytes, decimals, kib, maxunit) {
     const index = sizes.indexOf(maxunit);
     if (index !== -1) i = index;
   }
-  // eslint-disable-next-line no-restricted-properties
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+
+  return `${Number.parseFloat((bytes / k ** i).toFixed(dm))} ${sizes[i]}`;
 }
 
 const i18n = new VueI18n({
@@ -177,9 +175,9 @@ new Vue({
 
         if (!this.clientsPersist[client.id]) {
           this.clientsPersist[client.id] = {};
-          this.clientsPersist[client.id].transferRxHistory = Array(50).fill(0);
+          this.clientsPersist[client.id].transferRxHistory = Array.from({ length: 50 }).fill(0);
           this.clientsPersist[client.id].transferRxPrevious = client.transferRx;
-          this.clientsPersist[client.id].transferTxHistory = Array(50).fill(0);
+          this.clientsPersist[client.id].transferTxHistory = Array.from({ length: 50 }).fill(0);
           this.clientsPersist[client.id].transferTxPrevious = client.transferTx;
         }
 
@@ -249,8 +247,8 @@ new Vue({
           this.requiresPassword = session.requiresPassword;
           return this.refresh();
         })
-        .catch((err) => {
-          alert(err.message || err.toString());
+        .catch((error) => {
+          alert(error.message || error.toString());
         })
         .finally(() => {
           this.authenticating = false;
@@ -266,8 +264,8 @@ new Vue({
           this.authenticated = false;
           this.clients = null;
         })
-        .catch((err) => {
-          alert(err.message || err.toString());
+        .catch((error) => {
+          alert(error.message || error.toString());
         });
     },
     createClient() {
@@ -276,37 +274,37 @@ new Vue({
 
       this.api
         .createClient({ name })
-        .catch((err) => alert(err.message || err.toString()))
+        .catch((error) => alert(error.message || error.toString()))
         .finally(() => this.refresh().catch(console.error));
     },
     deleteClient(client) {
       this.api
         .deleteClient({ clientId: client.id })
-        .catch((err) => alert(err.message || err.toString()))
+        .catch((error) => alert(error.message || error.toString()))
         .finally(() => this.refresh().catch(console.error));
     },
     enableClient(client) {
       this.api
         .enableClient({ clientId: client.id })
-        .catch((err) => alert(err.message || err.toString()))
+        .catch((error) => alert(error.message || error.toString()))
         .finally(() => this.refresh().catch(console.error));
     },
     disableClient(client) {
       this.api
         .disableClient({ clientId: client.id })
-        .catch((err) => alert(err.message || err.toString()))
+        .catch((error) => alert(error.message || error.toString()))
         .finally(() => this.refresh().catch(console.error));
     },
     updateClientName(client, name) {
       this.api
         .updateClientName({ clientId: client.id, name })
-        .catch((err) => alert(err.message || err.toString()))
+        .catch((error) => alert(error.message || error.toString()))
         .finally(() => this.refresh().catch(console.error));
     },
     updateClientAddress(client, address) {
       this.api
         .updateClientAddress({ clientId: client.id, address })
-        .catch((err) => alert(err.message || err.toString()))
+        .catch((error) => alert(error.message || error.toString()))
         .finally(() => this.refresh().catch(console.error));
     },
     toggleTheme() {
@@ -349,12 +347,12 @@ new Vue({
         this.requiresPassword = session.requiresPassword;
         this.refresh({
           updateCharts: this.updateCharts,
-        }).catch((err) => {
-          alert(err.message || err.toString());
+        }).catch((error) => {
+          alert(error.message || error.toString());
         });
       })
-      .catch((err) => {
-        alert(err.message || err.toString());
+      .catch((error) => {
+        alert(error.message || error.toString());
       });
 
     setInterval(() => {
@@ -375,7 +373,7 @@ new Vue({
     this.api
       .getChartType()
       .then((res) => {
-        this.uiChartType = parseInt(res, 10);
+        this.uiChartType = Number.parseInt(res, 10);
       })
       .catch(() => {
         this.uiChartType = 0;
@@ -394,7 +392,7 @@ new Vue({
           .then((res) => res.json())
           .then((releases) => {
             const releasesArray = Object.entries(releases).map(([version, changelog]) => ({
-              version: parseInt(version, 10),
+              version: Number.parseInt(version, 10),
               changelog,
             }));
             releasesArray.sort((a, b) => {
@@ -412,7 +410,7 @@ new Vue({
         this.currentRelease = currentRelease;
         this.latestRelease = latestRelease;
       })
-      .catch((err) => console.error(err));
+      .catch((error) => console.error(error));
   },
   computed: {
     chartOptionsTX() {

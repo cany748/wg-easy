@@ -1,6 +1,3 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-undef */
-
 "use strict";
 
 class API {
@@ -14,7 +11,7 @@ class API {
     });
 
     if (res.status === 204) {
-      return undefined;
+      return;
     }
 
     const json = await res.json();
@@ -85,7 +82,7 @@ class API {
         ...client,
         createdAt: new Date(client.createdAt),
         updatedAt: new Date(client.updatedAt),
-        latestHandshakeAt: client.latestHandshakeAt !== null ? new Date(client.latestHandshakeAt) : null,
+        latestHandshakeAt: client.latestHandshakeAt === null ? null : new Date(client.latestHandshakeAt),
       })),
     );
   }

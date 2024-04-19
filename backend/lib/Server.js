@@ -1,10 +1,10 @@
 "use strict";
 
-const bcrypt = require("bcryptjs");
 const crypto = require("node:crypto");
 const { createServer } = require("node:http");
 const { stat, readFile } = require("node:fs/promises");
 const { join } = require("node:path");
+const bcrypt = require("bcryptjs");
 
 const expressSession = require("express-session");
 const debug = require("debug")("Server");
@@ -129,8 +129,8 @@ module.exports = class Server {
           return next();
         }
 
-        if (req.url.startsWith("/api/") && req.headers["authorization"]) {
-          if (bcrypt.compareSync(req.headers["authorization"], bcrypt.hashSync(PASSWORD, 10))) {
+        if (req.url.startsWith("/api/") && req.headers.authorization) {
+          if (bcrypt.compareSync(req.headers.authorization, bcrypt.hashSync(PASSWORD, 10))) {
             return next();
           }
           return res.status(401).json({
@@ -181,10 +181,10 @@ module.exports = class Server {
           const client = await WireGuard.getClient({ clientId });
           const config = await WireGuard.getClientConfiguration({ clientId });
           const configName = client.name
-            .replace(/[^a-zA-Z0-9_=+.-]/g, "-")
+            .replace(/[^\w+.=-]/g, "-")
             .replace(/(-{2,}|-$)/g, "-")
             .replace(/-$/, "")
-            .substring(0, 32);
+            .slice(0, 32);
           setHeader(event, "Content-Disposition", `attachment; filename="${configName || clientId}.conf"`);
           setHeader(event, "Content-Type", "text/plain");
           return config;

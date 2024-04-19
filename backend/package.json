@@ -4,6 +4,9 @@
   "version": "1.0.1",
   "description": "The easiest way to run WireGuard VPN + Web-based Admin UI.",
   "main": "server.js",
+  "engines": {
+    "node": "18"
+  },
   "scripts": {
     "serve": "DEBUG=Server,WireGuard nodemon server.js",
     "serve-with-password": "PASSWORD=wg npm run serve",
@@ -16,8 +19,5 @@
     "h3": "^1.11.1",
     "qrcode": "^1.5.3",
     "uuid": "^9.0.1"
-  },
-  "engines": {
-    "node": "18"
   }
 }

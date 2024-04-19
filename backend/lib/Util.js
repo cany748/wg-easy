@@ -1,6 +1,6 @@
 "use strict";
 
-const childProcess = require("child_process");
+const childProcess = require("node:child_process");
 
 module.exports = class Util {
   static isValidIPv4(str) {
@@ -8,7 +8,7 @@ module.exports = class Util {
     if (blocks.length !== 4) return false;
 
     for (let value of blocks) {
-      value = parseInt(value, 10);
+      value = Number.parseInt(value, 10);
       if (Number.isNaN(value)) return false;
       if (value < 0 || value > 255) return false;
     }
@@ -17,14 +17,13 @@ module.exports = class Util {
   }
 
   static promisify(fn) {
-    // eslint-disable-next-line func-names
     return function (req, res) {
       Promise.resolve()
         .then(async () => fn(req, res))
         .then((result) => {
           if (res.headersSent) return;
 
-          if (typeof result === "undefined") {
+          if (result === undefined) {
             return res.status(204).end();
           }
 
@@ -35,7 +34,6 @@ module.exports = class Util {
             error = new Error(error);
           }
 
-          // eslint-disable-next-line no-console
           console.error(error);
 
           return res.status(error.statusCode || 500).json({
@@ -48,10 +46,8 @@ module.exports = class Util {
 
   static async exec(cmd, { log = true } = {}) {
     if (typeof log === "string") {
-      // eslint-disable-next-line no-console
       console.log(`$ ${log}`);
     } else if (log === true) {
-      // eslint-disable-next-line no-console
       console.log(`$ ${cmd}`);
     }
 

@@ -1,14 +1,11 @@
 "use strict";
 
-const fs = require("fs").promises;
-const path = require("path");
+const fs = require("node:fs").promises;
+const path = require("node:path");
 
 const debug = require("debug")("WireGuard");
 const uuid = require("uuid");
 const QRCode = require("qrcode");
-
-const Util = require("./Util");
-const ServerError = require("./ServerError");
 
 const {
   WG_PATH,
@@ -24,6 +21,8 @@ const {
   WG_PRE_DOWN,
   WG_POST_DOWN,
 } = require("../config");
+const Util = require("./Util");
+const ServerError = require("./ServerError");
 
 module.exports = class WireGuard {
   async getConfig() {
@@ -39,7 +38,7 @@ module.exports = class WireGuard {
           config = await fs.readFile(path.join(WG_PATH, "wg0.json"), "utf8");
           config = JSON.parse(config);
           debug("Configuration loaded.");
-        } catch (err) {
+        } catch {
           const privateKey = await Util.exec("wg genkey");
           const publicKey = await Util.exec(`echo ${privateKey} | wg pubkey`, {
             log: "echo ***hidden*** | wg pubkey",
@@ -59,14 +58,14 @@ module.exports = class WireGuard {
 
         await this.__saveConfig(config);
         await Util.exec("wg-quick down wg0").catch(() => {});
-        await Util.exec("wg-quick up wg0").catch((err) => {
-          if (err && err.message && err.message.includes('Cannot find device "wg0"')) {
+        await Util.exec("wg-quick up wg0").catch((error) => {
+          if (error && error.message && error.message.includes('Cannot find device "wg0"')) {
             throw new Error(
               'WireGuard exited with the error: Cannot find device "wg0"\nThis usually means that your host\'s kernel does not support WireGuard!',
             );
           }
 
-          throw err;
+          throw error;
         });
         // await Util.exec(`iptables -t nat -A POSTROUTING -s ${WG_DEFAULT_ADDRESS.replace('x', '0')}/24 -o ' + WG_DEVICE + ' -j MASQUERADE`);
         // await Util.exec('iptables -A INPUT -p udp -m udp --dport 51820 -j ACCEPT');
@@ -152,30 +151,18 @@ ${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ""}AllowedIP
     const dump = await Util.exec("wg show wg0 dump", {
       log: false,
     });
-    dump
-      .trim()
-      .split("\n")
-      .slice(1)
-      .forEach((line) => {
-        const [
-          publicKey,
-          preSharedKey, // eslint-disable-line no-unused-vars
-          endpoint, // eslint-disable-line no-unused-vars
-          allowedIps, // eslint-disable-line no-unused-vars
-          latestHandshakeAt,
-          transferRx,
-          transferTx,
-          persistentKeepalive,
-        ] = line.split("\t");
+    for (const line of dump.trim().split("\n").slice(1)) {
+      const [publicKey, preSharedKey, endpoint, allowedIps, latestHandshakeAt, transferRx, transferTx, persistentKeepalive] =
+        line.split("\t");
 
-        const client = clients.find((client) => client.publicKey === publicKey);
-        if (!client) return;
+      const client = clients.find((client) => client.publicKey === publicKey);
+      if (!client) continue;
 
-        client.latestHandshakeAt = latestHandshakeAt === "0" ? null : new Date(Number(`${latestHandshakeAt}000`));
-        client.transferRx = Number(transferRx);
-        client.transferTx = Number(transferTx);
-        client.persistentKeepalive = persistentKeepalive;
-      });
+      client.latestHandshakeAt = latestHandshakeAt === "0" ? null : new Date(Number(`${latestHandshakeAt}000`));
+      client.transferRx = Number(transferRx);
+      client.transferTx = Number(transferTx);
+      client.persistentKeepalive = persistentKeepalive;
+    }
 
     return clients;
   }

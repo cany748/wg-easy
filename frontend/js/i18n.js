@@ -1,7 +1,6 @@
 "use strict";
 
 const messages = {
-  // eslint-disable-line no-unused-vars
   en: {
     name: "Name",
     password: "Password",
