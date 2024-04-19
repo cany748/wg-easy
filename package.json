@@ -9,7 +9,7 @@
     "type-check": "vue-tsc --build --force"
   },
   "devDependencies": {
-    "@cany748/eslint-config": "^2.0.0",
+    "@cany748/eslint-config-ts": "^2.0.0",
     "@types/node": "^20.11.15"
   },
   "eslintConfig": {

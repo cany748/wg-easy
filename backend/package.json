@@ -1,22 +1,28 @@
 {
-  "release": "13",
-  "name": "wg-easy",
-  "version": "1.0.1",
-  "description": "The easiest way to run WireGuard VPN + Web-based Admin UI.",
-  "main": "server.js",
-  "engines": {
-    "node": "18"
-  },
+  "type": "module",
+  "release": "12",
   "scripts": {
-    "serve": "DEBUG=Server,WireGuard WG_HOST=0.0.0.0 node server.js",
-    "serve-with-password": "PASSWORD=wg npm run serve",
-    "lint": "eslint ."
+    "dev": "DEBUG=Server,WireGuard WG_HOST=0.0.0.0 nitropack dev",
+    "dev:password": "PASSWORD=wg pnpm run dev",
+    "build": "nitropack build",
+    "preview": "node .output/server/index.mjs"
   },
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/debug": "^4.1.12",
+    "@types/ip": "^1.1.3",
+    "@types/qrcode": "^1.5.5",
+    "bcrypt": "^5.1.1",
     "debug": "^4.3.4",
-    "h3": "^1.11.1",
-    "qrcode": "^1.5.3",
-    "uuid": "^9.0.1"
+    "nitropack": "^2.9.5",
+    "qrcode": "^1.5.3"
+  },
+  "eslintConfig": {
+    "extends": [
+      "@cany748/eslint-config-ts"
+    ],
+    "rules": {
+      "n/no-unpublished-import": "off"
+    }
   }
 }

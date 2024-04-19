@@ -24,31 +24,35 @@ class API {
   }
 
   async getRelease() {
-    return this.call({
+    const data = await this.call({
       method: "get",
       path: "/release",
     });
+    return data.release;
   }
 
   async getLang() {
-    return this.call({
+    const data = await this.call({
       method: "get",
       path: "/lang",
     });
+    return data.lang;
   }
 
   async getuiTrafficStats() {
-    return this.call({
+    const data = await this.call({
       method: "get",
       path: "/ui-traffic-stats",
     });
+    return data.uiTrafficStats;
   }
 
   async getChartType() {
-    return this.call({
+    const data = await this.call({
       method: "get",
       path: "/ui-chart-type",
     });
+    return data.uiChartType;
   }
 
   async getSession() {
@@ -82,7 +86,7 @@ class API {
         ...client,
         createdAt: new Date(client.createdAt),
         updatedAt: new Date(client.updatedAt),
-        latestHandshakeAt: client.latestHandshakeAt === null ? null : new Date(client.latestHandshakeAt),
+        latestHandshakeAt: client.latestHandshakeAt ? new Date(client.latestHandshakeAt) : null,
       })),
     );
   }
