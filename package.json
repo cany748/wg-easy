@@ -1,21 +1,39 @@
 {
   "type": "module",
   "private": true,
+  "release": "12",
   "scripts": {
-    "dev": "pnpm -r dev",
-    "build": "pnpm -r build",
-    "preview": "pnpm -r preview",
+    "dev": "DEBUG=Server,WireGuard WG_HOST=0.0.0.0 nuxt dev",
+    "dev:password": "PASSWORD=wg pnpm run dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
     "lint": "eslint . --fix",
-    "type-check": "vue-tsc --build --force"
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@iconify/json": "^2.2.236",
+    "@nuxt/eslint": "^0.5.0",
+    "@nuxtjs/i18n": "^8.3.3",
+    "@unocss/eslint-config": "^0.62.1",
+    "@unocss/nuxt": "^0.62.1",
+    "@unocss/preset-rem-to-px": "^0.62.1",
+    "apexcharts": "^3.52.0",
+    "bcrypt": "^5.1.1",
+    "debug": "^4.3.6",
+    "js-sha256": "^0.11.0",
+    "nuxt": "^3.12.4",
+    "qrcode": "^1.5.4",
+    "timeago.js": "^4.0.2",
+    "vue-apexcharts": "^1.6.2",
+    "vue-i18n": "^9.13.1"
   },
   "devDependencies": {
-    "@cany748/eslint-config-ts": "^2.0.0",
-    "@types/node": "^20.11.15"
-  },
-  "eslintConfig": {
-    "extends": [
-      "@cany748"
-    ]
+    "@cany748/eslint-config": "^3.0.1",
+    "@types/bcrypt": "^5.0.2",
+    "@types/debug": "^4.1.12",
+    "@types/node": "^20.12.7",
+    "@types/qrcode": "^1.5.5"
   },
   "prettier": {
     "printWidth": 140

@@ -1,4 +1,4 @@
-export { release as RELEASE } from "./package.json";
+export { release as RELEASE } from "../package.json";
 
 // TODO: check it
 if (!process.env.PORT) process.env.PORT = "51821";
@@ -43,6 +43,6 @@ iptables -D FORWARD -o wg0 -j ACCEPT;
 `
     .split("\n")
     .join(" ");
-export const LANG = process.env.LANG || "en";
+
 export const UI_TRAFFIC_STATS = process.env.UI_TRAFFIC_STATS || "false";
 export const UI_CHART_TYPE = process.env.UI_CHART_TYPE || 0;
